@@ -2,20 +2,23 @@
 
 Cosmic Dream Bridge is the optional Windows companion for the Wallpaper Engine
 edition of Cosmic Dream. It supplies system-wide CPU, GPU, memory and network
-metrics to W02 and sends the previous, play/pause and next media keys for W03.
-It also seeks the current Windows media session when the W03 progress rail is
-dragged and aligns W02 with Task Manager semantics: processor utility for CPU,
+metrics to W02 and supplies the current Windows media session metadata,
+playback state and timeline to W03. It also sends the previous, play/pause and
+next media keys, seeks the active session when the W03 progress rail is dragged,
+and aligns W02 with Task Manager semantics: processor utility for CPU,
 available physical memory, the busiest GPU engine, and the busiest active
 network adapter in Mbps. Audio spectrum data remains entirely inside Wallpaper
 Engine. The bridge also supplies the native W01 task editor used when desktop
 keyboard focus is unavailable.
+
+Current release: `1.4.0`.
 
 ## Install
 
 Open PowerShell or CMD, paste this command, and press Enter:
 
 ```cmd
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$p=Join-Path $env:TEMP 'Install-CosmicDreamBridge-Standalone.ps1'; $expected='BEA1FC3EBA698FEA48A7ED17E5FC966BA500CDA0D766F88F5E982B017F8D800F'; $sources=@('https://gitcode.com/gcw_iBQYxQC8/CosmicDream-Bridge/releases/download/v0.1/Install-CosmicDreamBridge-Standalone.ps1','https://github.com/sulfurchi-art/CosmicDream-Bridge/releases/download/v0.1/Install-CosmicDreamBridge-Standalone.ps1'); $ok=$false; foreach($u in $sources){try{Invoke-WebRequest -UseBasicParsing $u -OutFile $p; if((Get-FileHash -Algorithm SHA256 $p).Hash -eq $expected){$ok=$true; break}}catch{}; Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue}; if(-not $ok){throw 'Cosmic Dream Bridge download or SHA-256 verification failed.'}; & $p"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$p=Join-Path $env:TEMP 'Install-CosmicDreamBridge-Standalone.ps1'; $expected='E2C37D8B2D90BB9630E1FD5D915D0E0BF66CBED16C59D4E7A0804EA087876B2D'; $sources=@('https://gitcode.com/gcw_iBQYxQC8/CosmicDream-Bridge/releases/download/v1.4.0/Install-CosmicDreamBridge-Standalone.ps1','https://github.com/sulfurchi-art/CosmicDream-Bridge/releases/download/v1.4.0/Install-CosmicDreamBridge-Standalone.ps1'); $ok=$false; foreach($u in $sources){try{Invoke-WebRequest -UseBasicParsing $u -OutFile $p; if((Get-FileHash -Algorithm SHA256 $p).Hash -eq $expected){$ok=$true; break}}catch{}; Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue}; if(-not $ok){throw 'Cosmic Dream Bridge download or SHA-256 verification failed.'}; & $p"
 ```
 
 The installer tries the GitCode mirror first, falls back to GitHub, and verifies
@@ -43,7 +46,7 @@ endpoint automatically; there is no port setting to configure.
 The bridge exposes these loopback endpoints:
 
 - `GET /v1/health`
-- `GET /v1/metrics`
+- `GET /v1/metrics` (system metrics plus current media-session state)
 - `POST /v1/media/command?command=previous|toggle|next`
 - `POST /v1/media/seek?position=<seconds>`
 - `POST /v1/todo/editor?<task-fields>`
