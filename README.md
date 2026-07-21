@@ -3,28 +3,31 @@
 Cosmic Dream Bridge is the optional Windows companion for the Wallpaper Engine
 edition of Cosmic Dream. It supplies system-wide CPU, GPU, memory and network
 metrics to W02 and supplies the current Windows media session metadata,
-playback state and timeline to W03. It also sends the previous, play/pause and
-next media keys, seeks the active session when the W03 progress rail is dragged,
-and aligns W02 with Task Manager semantics: processor utility for CPU,
+playback state and default output-device identity to W03. W03 is intentionally
+read-only: transport commands, timeline polling and seek control were removed
+to keep media integration predictable across players. The bridge also aligns
+W02 with Task Manager semantics: processor utility for CPU,
 available physical memory, the busiest GPU engine, and the busiest active
 network adapter in Mbps. Audio spectrum data remains entirely inside Wallpaper
 Engine. The bridge also supplies the native W01 task editor used when desktop
 keyboard focus is unavailable.
 
-Current release: `1.4.0`.
+Required runtime for this wallpaper build: `1.6.0` or newer (protocol v2).
+
+Current maintenance candidate: `1.6.3`. It reports the current Windows
+default audio output endpoint so W03 can identify the device carrying playback.
+It does not replace Wallpaper Engine's official audio capture path. The release
+also retains automatic GPU counter recovery, reliable in-place upgrades, real
+CPU/GPU identity, and multi-GPU selection for W02.
+
+The former `1.4.0` public installer is not compatible with this build's split
+W02/W03 polling or opaque-origin authorization rules. Do not publish a one-line
+Use the generated standalone asset and its matching SHA-256 from the same
+release. Do not reuse a checksum from an older Bridge version.
 
 ## Install
 
-Open PowerShell or CMD, paste this command, and press Enter:
-
-```cmd
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$p=Join-Path $env:TEMP 'Install-CosmicDreamBridge-Standalone.ps1'; $expected='E2C37D8B2D90BB9630E1FD5D915D0E0BF66CBED16C59D4E7A0804EA087876B2D'; $sources=@('https://gitcode.com/gcw_iBQYxQC8/CosmicDream-Bridge/releases/download/v1.4.0/Install-CosmicDreamBridge-Standalone.ps1','https://github.com/sulfurchi-art/CosmicDream-Bridge/releases/download/v1.4.0/Install-CosmicDreamBridge-Standalone.ps1'); $ok=$false; foreach($u in $sources){try{Invoke-WebRequest -UseBasicParsing $u -OutFile $p; if((Get-FileHash -Algorithm SHA256 $p).Hash -eq $expected){$ok=$true; break}}catch{}; Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue}; if(-not $ok){throw 'Cosmic Dream Bridge download or SHA-256 verification failed.'}; & $p"
-```
-
-The installer tries the GitCode mirror first, falls back to GitHub, and verifies
-the downloaded script with SHA-256 before execution.
-
-Alternatively, download the standalone installer, open PowerShell in its
+From the verified release package, open PowerShell in the standalone installer's
 directory and run:
 
 ```powershell
@@ -43,13 +46,16 @@ Administrator rights are not required. The installer copies the runtime to
 and starts the bridge immediately. Cosmic Dream discovers the fixed loopback
 endpoint automatically; there is no port setting to configure.
 
-The bridge exposes these loopback endpoints:
+Protocol v2 exposes these loopback endpoints. The route prefix remains `/v1`
+for compatibility; `/v1/health` reports `protocolVersion: 2` and advertises the
+split hardware and media endpoints.
 
 - `GET /v1/health`
-- `GET /v1/metrics` (system metrics plus current media-session state)
-- `POST /v1/media/command?command=previous|toggle|next`
-- `POST /v1/media/seek?position=<seconds>`
+- `GET /v1/hardware` (CPU identity, per-GPU identity and usage, memory and network snapshot)
+- `GET /v1/media` (current media-session metadata, playback state and output device)
+- `GET /v1/metrics` (compatibility response combining hardware and media)
 - `POST /v1/todo/editor?<task-fields>`
+- `GET /v1/diagnostics`
 
 Verify the installation at:
 
@@ -75,8 +81,10 @@ Run the bridge directly on a test port:
 .\Start-CosmicDreamBridge.cmd -Port 18765
 ```
 
-The HTTP server binds only to `127.0.0.1`. Browser access is limited to local,
-file-based and Wallpaper Engine origins. Media commands additionally require the
-Cosmic Dream client header and accept `POST` requests only. The task editor uses
-the same authenticated local route and opens a standard Windows dialog in the
+The HTTP server binds only to `127.0.0.1`. Requests without an `Origin` header
+remain available to local native clients, and `http://localhost` plus
+`http://127.0.0.1` origins are allowed. `Origin: null` and `file:` origins are
+accepted only when the request's live TCP connection belongs to Wallpaper
+Engine's 32-bit or 64-bit wallpaper/webwallpaper process. The task editor uses
+the authenticated local route and opens a standard Windows dialog in the
 current user's desktop session.
